@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Habiestilo — Painel de Imóveis &amp; Sincronização</title>
+  <link
+    rel="icon"
+    type="image/svg+xml"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%231e1e1e'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-family='sans-serif' font-weight='700' font-size='18' fill='%23b39d69'%3EH%3C/text%3E%3C/svg%3E"
+  />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="/dashboard.css" />
+</head>
+<body>
+  <div class="dash-shell">
+    <!-- Top Header -->
+    <header class="dash-header">
+      <div class="dash-brand">
+        <div class="brand-title">HABI<span>Ξ</span>STILO</div>
+        <div class="brand-sub">Painel de Imóveis &amp; Sincronização</div>
+      </div>
+
+      <div class="dash-actions">
+        <a href="/" target="_blank" rel="noopener" class="btn btn-secondary">
+          Abrir Digital Signage
+        </a>
+        <button id="sync-btn" type="button" class="btn btn-primary">
+          <span class="btn-spinner" aria-hidden="true"></span>
+          <span id="sync-btn-label">Sincronizar Agora</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Status Banner -->
+    <section class="status-strip">
+      <div class="stat-pill">
+        <span class="stat-label">Imóveis no signage</span>
+        <strong id="stat-total" class="stat-value">0 / 0</strong>
+      </div>
+      <div class="stat-pill">
+        <span class="stat-label">Última sincronização</span>
+        <strong id="stat-synced-at" class="stat-value">—</strong>
+      </div>
+      <div class="stat-pill">
+        <span class="stat-label">Fonte</span>
+        <strong id="stat-source" class="stat-value">habiestilo.com</strong>
+      </div>
+      <div id="sync-feedback" class="sync-feedback hidden" role="status"></div>
+    </section>
+
+    <!-- Sync Changes Section -->
+    <section class="card diff-section">
+      <div class="section-head">
+        <div>
+          <h2>Alterações da Sincronização</h2>
+          <p id="diff-subtitle" class="section-sub">
+            Comparação entre a sincronização selecionada e a anterior
+          </p>
+        </div>
+
+        <div class="history-select-wrap">
+          <label for="history-select">Registo:</label>
+          <select id="history-select" class="history-select"></select>
+        </div>
+      </div>
+
+      <div class="diff-grid">
+        <article class="diff-box diff-removed">
+          <div class="diff-box-head">
+            <h3>Saíram os imóveis</h3>
+            <span id="count-removed" class="count-badge badge-removed">0</span>
+          </div>
+          <ul id="list-removed" class="diff-list"></ul>
+        </article>
+
+        <article class="diff-box diff-price">
+          <div class="diff-box-head">
+            <h3>Mudança de valor nos imóveis</h3>
+            <span id="count-price" class="count-badge badge-price">0</span>
+          </div>
+          <ul id="list-price" class="diff-list"></ul>
+        </article>
+
+        <article class="diff-box diff-added">
+          <div class="diff-box-head">
+            <h3>Foram adicionados os imóveis</h3>
+            <span id="count-added" class="count-badge badge-added">0</span>
+          </div>
+          <ul id="list-added" class="diff-list"></ul>
+        </article>
+      </div>
+    </section>
+
+    <!-- Properties Table Section -->
+    <section class="card properties-section">
+      <div class="section-head">
+        <div>
+          <h2>Imóveis Inseridos no Signage</h2>
+          <p id="prop-count-sub" class="section-sub">A carregar imóveis...</p>
+        </div>
+
+        <div class="filters-bar">
+          <input
+            id="search-input"
+            type="search"
+            class="search-input"
+            placeholder="Pesquisar título, referência ou zona..."
+            aria-label="Pesquisar imóveis"
+          />
+          <div id="business-pills" class="pill-group" role="group" aria-label="Filtrar imóveis">
+            <button type="button" class="filter-pill is-active" data-filter="all">Todos</button>
+            <button type="button" class="filter-pill" data-filter="venda">Venda</button>
+            <button type="button" class="filter-pill" data-filter="arrend">Arrendamento</button>
+            <button type="button" class="filter-pill" data-filter="inactive">Inativos</button>
+          </div>
+        </div>
+      </div>
+
+      <p id="reorder-hint" class="reorder-hint hidden">
+        Para reordenar a sequência de exibição, selecione <strong>Todos</strong> e limpe a pesquisa.
+      </p>
+
+      <div class="table-wrap">
+        <table class="prop-table">
+          <thead>
+            <tr>
+              <th>Ordem</th>
+              <th>Estado</th>
+              <th>Imóvel</th>
+              <th>Referência</th>
+              <th>Localização</th>
+              <th>Negócio</th>
+              <th>Valor</th>
+              <th>Características</th>
+              <th>Fotos</th>
+            </tr>
+          </thead>
+          <tbody id="properties-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <script type="module" src="/dashboard.js"></script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: habiestilo-digital-signage
+    runtime: node
+    plan: free
+    buildCommand: npm ci --omit=dev
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: ADMIN_USER
+        value: admin
+      - key: ADMIN_PASSWORD
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false
+      - key: AUTO_SYNC_MINUTES
+        value: "0"
+      - key: PROPERTY_DURATION_MS
+        value: "25000"
+      - key: PHOTO_DURATION_MS
+        value: "5000"

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Habiestilo — Digital Signage</title>
+  <link
+    rel="icon"
+    type="image/svg+xml"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%231e1e1e'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-family='sans-serif' font-weight='700' font-size='18' fill='%23b39d69'%3EH%3C/text%3E%3C/svg%3E"
+  />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <main class="signage-viewport">
+    <section id="signage-stage" class="signage-stage" aria-live="polite">
+      <!-- Top Photo Showcase -->
+      <div class="photo-stage">
+        <div id="photo-layers" class="photo-layers">
+          <img id="photo-layer-a" class="photo-layer" alt="" />
+          <img id="photo-layer-b" class="photo-layer" alt="" />
+        </div>
+        <div class="photo-scrim"></div>
+      </div>
+
+      <!-- Dark Content Panel -->
+      <div class="info-panel">
+        <!-- Price overlapping seam -->
+        <div class="price-wrapper anim-item" data-anim="price">
+          <div id="prop-price" class="prop-price">410.000€</div>
+        </div>
+
+        <div id="prop-badge" class="prop-badge anim-item" data-anim="badge">
+          <span>PARA VENDA</span>
+          <span class="badge-sep"></span>
+          <span>FOR SALE</span>
+        </div>
+
+        <div class="info-body">
+          <h1 id="prop-title" class="prop-title anim-item" data-anim="title"></h1>
+          <div id="prop-location" class="prop-location anim-item" data-anim="location"></div>
+
+          <div id="prop-specs" class="prop-specs anim-item" data-anim="specs"></div>
+
+          <p id="prop-description" class="prop-description anim-item" data-anim="description"></p>
+        </div>
+
+        <!-- Footer: Brand + QR -->
+        <footer class="panel-footer anim-item" data-anim="footer">
+          <div class="brand-lockup" aria-label="Habiestilo Mediação Imobiliária">
+            <div class="brand-wordmark">
+              <span>H</span><span>A</span><span>B</span><span>I</span>
+              <svg class="brand-e" viewBox="0 0 26 24" aria-hidden="true">
+                <rect x="0" y="1" width="26" height="2.4" fill="currentColor" />
+                <rect x="0" y="10.8" width="21" height="2.4" fill="currentColor" />
+                <rect x="0" y="20.6" width="26" height="2.4" fill="currentColor" />
+              </svg>
+              <span>S</span><span>T</span><span>I</span><span>L</span><span>O</span>
+            </div>
+            <div class="brand-subtitle">MEDIAÇÃO IMOBILIÁRIA</div>
+          </div>
+
+          <div class="qr-block">
+            <span class="qr-cta">Saiba mais</span>
+            <div id="prop-qr" class="qr-box"></div>
+          </div>
+        </footer>
+
+        <div class="bottom-gold-bar"></div>
+      </div>
+
+      <!-- Empty / Needs Sync state -->
+      <div id="empty-state" class="empty-state hidden">
+        <div class="empty-card">
+          <div class="brand-wordmark">HABIESTILO</div>
+          <p id="empty-message">
+            Sem imóveis carregados. Execute <code>npm run sync</code> no servidor para sincronizar.
+          </p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="/app.js" defer></script>
+</body>
+</html>

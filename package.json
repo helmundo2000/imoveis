@@ -1,0 +1,19 @@
+{
+  "name": "habiestilo-digital-signage",
+  "version": "1.0.0",
+  "description": "Mini-site de digital signage vertical (9:16) sincronizado com o site da Habiestilo",
+  "type": "module",
+  "main": "src/server.js",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "sync": "node src/sync.js"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "pg": "^8.23.1",
+    "qrcode": "^1.5.4"
+  }
+}
