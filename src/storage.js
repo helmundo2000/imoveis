@@ -8,6 +8,9 @@ const { Pool } = pg;
 let pgPool = null;
 let pgInitPromise = null;
 
+const memoryCache = new Map();
+const inFlightReads = new Map();
+
 function shouldUseSsl(connectionString) {
   if (/sslmode=disable/i.test(connectionString)) return false;
   if (/localhost|127\.0\.0\.1/i.test(connectionString)) return false;
@@ -64,12 +67,31 @@ export async function writeJsonAtomic(filePath, data) {
 }
 
 async function readStoreItem(key, filePath) {
-  const pool = await getPgPool();
-  if (pool) {
-    const res = await pool.query('SELECT value FROM signage_store WHERE key = $1', [key]);
-    return res.rows[0]?.value ?? null;
+  if (memoryCache.has(key)) {
+    return memoryCache.get(key);
   }
-  return readJsonIfExists(filePath);
+
+  if (inFlightReads.has(key)) {
+    return inFlightReads.get(key);
+  }
+
+  const promise = (async () => {
+    const pool = await getPgPool();
+    let value;
+    if (pool) {
+      const res = await pool.query('SELECT value FROM signage_store WHERE key = $1', [key]);
+      value = res.rows[0]?.value ?? null;
+    } else {
+      value = await readJsonIfExists(filePath);
+    }
+    memoryCache.set(key, value);
+    return value;
+  })().finally(() => {
+    inFlightReads.delete(key);
+  });
+
+  inFlightReads.set(key, promise);
+  return promise;
 }
 
 async function writeStoreItem(key, filePath, data) {
@@ -82,9 +104,22 @@ async function writeStoreItem(key, filePath, data) {
        DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()`,
       [key, JSON.stringify(data)]
     );
-    return;
+  } else {
+    await writeJsonAtomic(filePath, data);
   }
-  await writeJsonAtomic(filePath, data);
+  memoryCache.set(key, data);
+}
+
+export function getCacheStats() {
+  return {
+    properties: memoryCache.has('properties'),
+    displaySettings: memoryCache.has('display_settings'),
+    syncHistory: memoryCache.has('sync_history'),
+  };
+}
+
+export function clearMemoryCache() {
+  memoryCache.clear();
 }
 
 export function isDatabaseEnabled() {

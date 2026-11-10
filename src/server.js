@@ -6,6 +6,7 @@ import { runSync } from './sync.js';
 import {
   applyDisplaySettings,
   closeStorage,
+  getCacheStats,
   isDatabaseEnabled,
   readDisplaySettings,
   readPropertiesData,
@@ -82,6 +83,7 @@ app.get('/api/health', (_req, res) => {
     ok: true,
     storage: isDatabaseEnabled() ? 'postgres' : 'json',
     authEnabled: Boolean(config.auth.password),
+    cached: getCacheStats(),
     timestamp: new Date().toISOString(),
   });
 });
@@ -241,11 +243,17 @@ app.use(express.static(config.publicDir));
 
 async function ensureInitialData() {
   try {
-    const existing = await readPropertiesData();
+    const [existing] = await Promise.all([
+      readPropertiesData(),
+      readDisplaySettings(),
+      readSyncHistory(),
+    ]);
     if (!existing || !Array.isArray(existing.properties) || existing.properties.length === 0) {
       console.log('[server] Sem dados iniciais. A executar primeira sincronização...');
       const res = await triggerSync();
       console.log(`[server] Sincronização inicial concluída (${res.count} imóveis).`);
+    } else {
+      console.log(`[server] Cache carregada (${existing.properties.length} imóveis).`);
     }
   } catch (err) {
     console.error('[server] Falha na sincronização inicial:', err.message);
