@@ -468,6 +468,34 @@ body.kiosk-idle {
   transition-delay: 0ms !important;
 }
 
+/* ---------------- TRANSITION VIDEO OVERLAY ---------------- */
+.transition-overlay {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 15;
+  background: #1e1e1e;
+  opacity: 0;
+  pointer-events: none;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  -webkit-transition: opacity 240ms ease;
+  transition: opacity 240ms ease;
+}
+
+.transition-overlay.is-active {
+  opacity: 1;
+}
+
+.transition-video {
+  width: 1080px;
+  height: 1920px;
+  object-fit: cover;
+  display: block;
+}
+
 /* ---------------- EMPTY STATE ---------------- */
 .empty-state {
   position: absolute;

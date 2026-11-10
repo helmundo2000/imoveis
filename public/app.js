@@ -10,6 +10,8 @@
   var descEl = document.getElementById('prop-description');
   var qrEl = document.getElementById('prop-qr');
   var emptyEl = document.getElementById('empty-state');
+  var transitionOverlayEl = document.getElementById('transition-overlay');
+  var transitionVideoEl = document.getElementById('transition-video');
   var layerA = document.getElementById('photo-layer-a');
   var layerB = document.getElementById('photo-layer-b');
 
@@ -277,6 +279,87 @@
     qrEl.innerHTML = prop.qrSvg || '';
   }
 
+  function playTransitionVideo(onCovered) {
+    if (!transitionOverlayEl || !transitionVideoEl || query.transitionVideo === '0') {
+      stageEl.classList.remove('is-visible');
+      stageEl.classList.add('is-leaving');
+      return new Promise(function (resolve) {
+        setTimeout(function () {
+          Promise.resolve(onCovered()).then(resolve);
+        }, 340);
+      });
+    }
+
+    return new Promise(function (resolve) {
+      var settled = false;
+      var safetyTimer = null;
+      var swapPromise = null;
+
+      function cleanupAndResolve() {
+        if (settled) return;
+        settled = true;
+        clearTimeout(safetyTimer);
+        transitionVideoEl.removeEventListener('ended', onEnded);
+        transitionVideoEl.removeEventListener('error', onError);
+
+        var ensureSwapped = swapPromise || Promise.resolve(onCovered());
+        ensureSwapped.then(function () {
+          try {
+            transitionVideoEl.pause();
+          } catch (e) {
+            /* ignore */
+          }
+          transitionOverlayEl.classList.remove('is-active');
+          resolve();
+        });
+      }
+
+      function onEnded() {
+        cleanupAndResolve();
+      }
+
+      function onError() {
+        cleanupAndResolve();
+      }
+
+      transitionVideoEl.addEventListener('ended', onEnded);
+      transitionVideoEl.addEventListener('error', onError);
+
+      try {
+        transitionVideoEl.muted = true;
+        transitionVideoEl.currentTime = 0;
+      } catch (e) {
+        /* ignore if not yet seekable */
+      }
+
+      transitionOverlayEl.classList.add('is-active');
+
+      var playResult;
+      try {
+        playResult = transitionVideoEl.play();
+      } catch (e) {
+        playResult = null;
+      }
+
+      if (playResult && typeof playResult.catch === 'function') {
+        playResult.catch(function () {
+          cleanupAndResolve();
+        });
+      }
+
+      // Swap underlying property content once overlay fade-in covers the screen
+      setTimeout(function () {
+        swapPromise = Promise.resolve(onCovered());
+      }, 250);
+
+      var durMs =
+        transitionVideoEl.duration && isFinite(transitionVideoEl.duration)
+          ? Math.round(transitionVideoEl.duration * 1000) + 800
+          : 4200;
+      safetyTimer = setTimeout(cleanupAndResolve, Math.max(3500, durMs));
+    });
+  }
+
   function transitionToProperty(targetIndex, immediate) {
     if (state.isTransitioning || state.properties.length === 0) return Promise.resolve();
     state.isTransitioning = true;
@@ -289,33 +372,33 @@
       targetIndex = targetIndex % state.properties.length;
     }
 
-    var leavePromise = immediate
-      ? Promise.resolve()
-      : new Promise(function (resolve) {
-          stageEl.classList.remove('is-visible');
-          stageEl.classList.add('is-leaving');
-          setTimeout(resolve, 340);
-        });
+    state.propertyIndex = (targetIndex + state.properties.length) % state.properties.length;
+    state.photoIndex = 0;
 
-    return leavePromise.then(function () {
-      state.propertyIndex = (targetIndex + state.properties.length) % state.properties.length;
-      state.photoIndex = 0;
+    var prop = state.properties[state.propertyIndex];
+    var firstImg = prop.images && prop.images[0] ? prop.images[0] : '';
 
-      var prop = state.properties[state.propertyIndex];
-      var firstImg = prop.images && prop.images[0] ? prop.images[0] : '';
-
+    var prepareNextProperty = function () {
       return preloadImage(firstImg).then(function () {
+        stageEl.classList.remove('is-visible');
+        stageEl.classList.remove('is-leaving');
         renderPropertyContent(prop);
         showPhoto(firstImg, true);
-
-        stageEl.classList.remove('is-leaving');
-        void stageEl.offsetWidth;
-        stageEl.classList.add('is-visible');
-
-        state.isTransitioning = false;
-        scheduleNextPhoto();
-        scheduleNextProperty();
       });
+    };
+
+    var transitionPromise = immediate
+      ? prepareNextProperty()
+      : playTransitionVideo(prepareNextProperty);
+
+    return transitionPromise.then(function () {
+      stageEl.classList.remove('is-leaving');
+      void stageEl.offsetWidth;
+      stageEl.classList.add('is-visible');
+
+      state.isTransitioning = false;
+      scheduleNextPhoto();
+      scheduleNextProperty();
     });
   }
 
