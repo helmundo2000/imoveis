@@ -12,6 +12,7 @@
   var emptyEl = document.getElementById('empty-state');
   var transitionOverlayEl = document.getElementById('transition-overlay');
   var transitionVideoEl = document.getElementById('transition-video');
+  var wipeOverlayEl = document.getElementById('wipe-overlay');
   var layerA = document.getElementById('photo-layer-a');
   var layerB = document.getElementById('photo-layer-b');
 
@@ -279,47 +280,62 @@
     qrEl.innerHTML = prop.qrSvg || '';
   }
 
-  function playTransitionVideo(onCovered) {
-    if (!transitionOverlayEl || !transitionVideoEl || query.transitionVideo === '0') {
-      stageEl.classList.remove('is-visible');
-      stageEl.classList.add('is-leaving');
-      return new Promise(function (resolve) {
-        setTimeout(function () {
-          Promise.resolve(onCovered()).then(resolve);
-        }, 340);
-      });
-    }
+  function waitMs(ms) {
+    return new Promise(function (resolve) {
+      setTimeout(resolve, ms);
+    });
+  }
 
+  function resetWipe() {
+    if (!wipeOverlayEl) return;
+    wipeOverlayEl.classList.remove('is-covering', 'is-revealing');
+    wipeOverlayEl.classList.add('is-resetting');
+    void wipeOverlayEl.offsetWidth;
+    wipeOverlayEl.classList.remove('is-resetting');
+    void wipeOverlayEl.offsetWidth;
+  }
+
+  function coverWithWipe() {
+    if (!wipeOverlayEl) return Promise.resolve();
+    resetWipe();
+    wipeOverlayEl.classList.add('is-covering');
+    return waitMs(640);
+  }
+
+  function revealWithWipe() {
+    if (!wipeOverlayEl) return Promise.resolve();
+    wipeOverlayEl.classList.remove('is-covering');
+    wipeOverlayEl.classList.add('is-revealing');
+    return waitMs(620).then(function () {
+      resetWipe();
+    });
+  }
+
+  function waitForTransitionVideoEnd() {
     return new Promise(function (resolve) {
       var settled = false;
       var safetyTimer = null;
-      var swapPromise = null;
 
-      function cleanupAndResolve() {
+      function finish(played) {
         if (settled) return;
         settled = true;
         clearTimeout(safetyTimer);
         transitionVideoEl.removeEventListener('ended', onEnded);
         transitionVideoEl.removeEventListener('error', onError);
-
-        var ensureSwapped = swapPromise || Promise.resolve(onCovered());
-        ensureSwapped.then(function () {
-          try {
-            transitionVideoEl.pause();
-          } catch (e) {
-            /* ignore */
-          }
-          transitionOverlayEl.classList.remove('is-active');
-          resolve();
-        });
+        try {
+          transitionVideoEl.pause();
+        } catch (e) {
+          /* ignore */
+        }
+        resolve(played);
       }
 
       function onEnded() {
-        cleanupAndResolve();
+        finish(true);
       }
 
       function onError() {
-        cleanupAndResolve();
+        finish(false);
       }
 
       transitionVideoEl.addEventListener('ended', onEnded);
@@ -329,10 +345,8 @@
         transitionVideoEl.muted = true;
         transitionVideoEl.currentTime = 0;
       } catch (e) {
-        /* ignore if not yet seekable */
+        /* ignore */
       }
-
-      transitionOverlayEl.classList.add('is-active');
 
       var playResult;
       try {
@@ -343,20 +357,55 @@
 
       if (playResult && typeof playResult.catch === 'function') {
         playResult.catch(function () {
-          cleanupAndResolve();
+          finish(false);
         });
       }
-
-      // Swap underlying property content once overlay fade-in covers the screen
-      setTimeout(function () {
-        swapPromise = Promise.resolve(onCovered());
-      }, 250);
 
       var durMs =
         transitionVideoEl.duration && isFinite(transitionVideoEl.duration)
           ? Math.round(transitionVideoEl.duration * 1000) + 800
           : 4200;
-      safetyTimer = setTimeout(cleanupAndResolve, Math.max(3500, durMs));
+      safetyTimer = setTimeout(function () {
+        finish(true);
+      }, Math.max(3500, durMs));
+    });
+  }
+
+  function playTransitionVideo(onCovered) {
+    var useVideo =
+      Boolean(transitionOverlayEl) &&
+      Boolean(transitionVideoEl) &&
+      query.transitionVideo !== '0';
+
+    // 1. Sweep 4-color blocks from right to left across full screen
+    return coverWithWipe().then(function () {
+      // 2. While screen is 100% covered, swap underlying property DOM
+      return Promise.resolve(onCovered()).then(function () {
+        if (!useVideo) {
+          return revealWithWipe();
+        }
+
+        // 3. Activate video behind the wipe and start playback
+        transitionOverlayEl.classList.add('is-active');
+        var videoPromise = waitForTransitionVideoEnd();
+
+        // 4. Sweep blocks off to the left to reveal the full-width Habiestilo video
+        return revealWithWipe()
+          .then(function () {
+            return videoPromise;
+          })
+          .then(function (played) {
+            if (!played) {
+              transitionOverlayEl.classList.remove('is-active');
+              return Promise.resolve();
+            }
+            // 5. Sweep 4-color blocks back across screen to cover video, then reveal next property
+            return coverWithWipe().then(function () {
+              transitionOverlayEl.classList.remove('is-active');
+              return revealWithWipe();
+            });
+          });
+      });
     });
   }
 

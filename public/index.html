@@ -15,7 +15,7 @@
     href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap"
     rel="stylesheet"
   />
-  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/styles.css?v=3" />
 </head>
 <body>
   <main class="signage-viewport">
@@ -75,7 +75,7 @@
         <div class="bottom-gold-bar"></div>
       </div>
 
-      <!-- Transition Video Overlay between properties -->
+      <!-- Color-block wipe + Transition Video Overlay between properties -->
       <div id="transition-overlay" class="transition-overlay" aria-hidden="true">
         <video
           id="transition-video"
@@ -86,6 +86,13 @@
           webkit-playsinline
           preload="auto"
         ></video>
+      </div>
+
+      <div id="wipe-overlay" class="wipe-overlay" aria-hidden="true">
+        <div class="wipe-band wipe-band-1"></div>
+        <div class="wipe-band wipe-band-2"></div>
+        <div class="wipe-band wipe-band-3"></div>
+        <div class="wipe-band wipe-band-4"></div>
       </div>
 
       <!-- Empty / Needs Sync state -->
@@ -100,6 +107,6 @@
     </section>
   </main>
 
-  <script src="/app.js" defer></script>
+  <script src="/app.js?v=3" defer></script>
 </body>
 </html>
