@@ -35,6 +35,18 @@ function parsePositiveInt(value, fallback) {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 }
 
+export function normalizeDatabaseUrl(raw) {
+  let value = String(raw || '').trim();
+  if (!value) return '';
+
+  // Handle common copy-paste formats like `DATABASE_URL=...`, `psql '...'`, or quoted strings
+  const match = value.match(/(postgres(?:ql)?:\/\/[^\s'"]+)/i);
+  if (match) {
+    value = match[1];
+  }
+  return value.replace(/^['"]+|['"]+$/g, '');
+}
+
 export const config = {
   rootDir: ROOT_DIR,
   dataDir: path.join(ROOT_DIR, 'data'),
@@ -45,7 +57,7 @@ export const config = {
   port: parsePositiveInt(process.env.PORT, 3000),
   siteUrl: process.env.SITE_URL || 'https://www.habiestilo.com',
   apiBaseUrl: process.env.API_BASE_URL || 'https://websiteapi.egorealestate.com/v1',
-  databaseUrl: (process.env.DATABASE_URL || '').trim(),
+  databaseUrl: normalizeDatabaseUrl(process.env.DATABASE_URL),
   auth: {
     user: process.env.ADMIN_USER || 'admin',
     password: process.env.ADMIN_PASSWORD || '',
